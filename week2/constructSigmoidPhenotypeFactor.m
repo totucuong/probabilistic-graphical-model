@@ -46,9 +46,45 @@ phenotypeFactor = struct('var', [], 'card', [], 'val', []);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
 % Fill in phenotypeFactor.var.  This should be a 1-D row vector.
-% Fill in phenotypeFactor.card.  This should be a 1-D row vector.
+phenotypeFactor.var = [phenotypeVar geneCopyVarOneList' geneCopyVarTwoList']
 
+% Fill in phenotypeFactor.card.  This should be a 1-D row vector.
+% card(phenotype) = 2 by assumption
+% card(of each geneCopyVarOne) = number of alleles
+% each list has m genes,
+
+% number of genes
+m = length(geneCopyVarOneList);
+
+% build cardinality for variables in geneCopyVarOneList (from mom)
+A = [];
+
+for k=1:m
+    length(alleleWeights{k})
+    A = [A length(alleleWeights{k})];
+end
+phenotypeFactor.card = [2 A A];
+
+% compute probs
 phenotypeFactor.val = zeros(1, prod(phenotypeFactor.card));
-% Replace the zeros in phentoypeFactor.val with the correct values.
+geneCopyOneTwoAssignments = IndexToAssignment(1:prod(phenotypeFactor.card(2:end)), phenotypeFactor.card(2:end));
+
+% compute sigmoid values for each assignment of gene copy variable:
+% p(1|gene copies)
+z = [];
+for k=1:size(geneCopyOneTwoAssignments,1)
+    v = 0.0;
+    for i=1:m %for each gene
+        v = v + (alleleWeights{i}(geneCopyOneTwoAssignments(k,i)) + alleleWeights{i}(geneCopyOneTwoAssignments(k,i+m)));
+    end
+    z = [z;v];
+end
+z = computeSigmoid(z);
+
+physicalAssignments = [ones(size(geneCopyOneTwoAssignments,1),1) geneCopyOneTwoAssignments];
+phenotypeFactor = SetValueOfAssignment(phenotypeFactor, physicalAssignments, z);
+nonPhysicalAssignments = [2*ones(size(geneCopyOneTwoAssignments,1),1) geneCopyOneTwoAssignments];
+phenotypeFactor = SetValueOfAssignment(phenotypeFactor, nonPhysicalAssignments, 1-z);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
