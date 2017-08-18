@@ -24,23 +24,23 @@ M = repmat(struct('var', [], 'card', [], 'val', []), length(var),1);
 %
 % Implement Exact and MAP Inference.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if (isMax == 0)
-   % sum-prod
-   P = CreateCliqueTree(F, E);
-   P = CliqueTreeCalibrate(P, isMax);
-   for i=1:length(var)
-       % compute marginals of variable i
-       for k=1:length(P.cliqueList)
-           cliqueVar = P.cliqueList(k).var;
-           if ismember(i, cliqueVar)
+P = CreateCliqueTree(F, E);
+P = CliqueTreeCalibrate(P, isMax);
+for i=1:length(var)
+   % compute marginals of variable i
+   for k=1:length(P.cliqueList)
+       cliqueVar = P.cliqueList(k).var;
+       if ismember(i, cliqueVar)
+           if (isMax)
+               M(i) = FactorMaxMarginalization(P.cliqueList(k),setdiff(cliqueVar, i));
+           else
                M(i) = FactorMarginalization(P.cliqueList(k),setdiff(cliqueVar, i));
                M(i).val = M(i).val / sum(M(i).val);
-               break;
            end
+           break;
        end
    end
-else
-    % map-inference
 end
+
 
 end

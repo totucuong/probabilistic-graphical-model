@@ -38,37 +38,40 @@ MESSAGES = repmat(struct('var', [], 'card', [], 'val', []), N, N);
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if (isMax)
-    % Max-Sum Algorithm
-    % transform into log space
-%     for i=1:N
-%         P.cliqueList(i).val = log(P.cliqueList(i).val);
-%     end
-%     [i j] = GetNextCliques(P, MESSAGES);
+    for i=1:N
+        P.cliqueList(i).val = log(P.cliqueList(i).val);
+    end
+end
     
-else
-    % Sum-Product Algorithm
-    [i j] = GetNextCliques(P, MESSAGES);
-    while (i ~= 0)
+[i j] = GetNextCliques(P, MESSAGES);
+
+while (i ~= 0)
 %         disp(['passing message from', num2str(i), 'to', num2str(j)]);
-        % computing temporary factor psi
-        psi = P.cliqueList(i);
-        nbi = find(P.edges(:,i) == 1);
-        nbi = setdiff(nbi, j);
-        for k=1:length(nbi)
+    % computing temporary factor psi
+    psi = P.cliqueList(i);
+    nbi = find(P.edges(:,i) == 1);
+    nbi = setdiff(nbi, j);
+    for k=1:length(nbi)
+        if isMax
+            psi = FactorSum(psi, MESSAGES(nbi(k),i));
+        else
             psi = FactorProduct(psi, MESSAGES(nbi(k),i));
         end
-        
-        % computing message from i to j: tauij
-        sepij = intersect(P.cliqueList(i).var, P.cliqueList(j).var);
+    end
+
+    % computing message from i to j: tauij
+    sepij = intersect(P.cliqueList(i).var, P.cliqueList(j).var);
+    if isMax
+        tauij = FactorMaxMarginalization(psi,setdiff(P.cliqueList(i).var, sepij));
+    else
         tauij = FactorMarginalization(psi,setdiff(P.cliqueList(i).var, sepij));
-        
         % normalize msg before passing to avoid underflow
-        tauij.val = tauij.val / sum(tauij.val); 
-        MESSAGES(i,j) = tauij;
-        
-        [i j] = GetNextCliques(P, MESSAGES);
-    end       
-end
+        tauij.val = tauij.val / sum(tauij.val);    
+    end
+    MESSAGES(i,j) = tauij;
+    [i j] = GetNextCliques(P, MESSAGES);
+end       
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % YOUR CODE HERE
@@ -76,19 +79,20 @@ end
 % Now the clique tree has been calibrated. 
 % Compute the final potentials for the cliques and place them in P.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if (isMax)
-else
-    for i=1:length(P.cliqueList)
+
+for i=1:length(P.cliqueList)
     b = P.cliqueList(i);
     nb = find(P.edges(:,i) == 1);
     for k=1:length(nb)
-        b = FactorProduct(b, MESSAGES(nb(k), i));
+        if isMax
+            b = FactorSum(b, MESSAGES(nb(k), i));
+        else
+            b = FactorProduct(b, MESSAGES(nb(k), i));
+        end
     end
     P.cliqueList(i) = b;
-end
-end
 
-
+end
 
 return
 
