@@ -7,7 +7,8 @@
 %   in V must all have the same dimensionality.
 %
 %   Input arguments:
-%   V -- an array of variable names
+%   V -- an array of variable  (<cuong>: V contains variables not
+%   their names such as "pixel1" or "pixel2".)
 %   G -- the graph with the following fields:
 %     .names - a cell array where names{i} = name of variable i in the graph 
 %     .card - an array where card(i) is the cardinality of variable i
@@ -39,6 +40,7 @@ if length(unique(G.card(V))) ~= 1
 end
 
 % d is the dimensionality of all the variables we are extracting
+% <cuong>: all variables in V has the same dimensionality
 d = G.card(V(1));
 
 LogBS = zeros(1, d);
@@ -53,6 +55,19 @@ LogBS = zeros(1, d);
 %
 % Also you should have only ONE for-loop, as for-loops are VERY slow in matlab
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% first we need to determin factors that involv variable in V
+factorIds = unique([G.var2factors{V}]);
+newF = F(factorIds);
+
+newA = repmat(A, d, 1);
+newA(:,V) = repmat([1:d]', 1, length(V));
+
+% for all factors that involves variables in V. Perform in parallel
+% computation of multiplying (adding in log space) factors.
+for i=1:length(newF)
+    LogBS = LogBS + log(GetValueOfAssignment(newF(i), newA(:, newF(i).var)));
+end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

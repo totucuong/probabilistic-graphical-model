@@ -20,6 +20,10 @@ p_acceptance = 0.0;
 % Compute acceptance probability
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+logPA = LogProbOfJointAssignment(F,A);
+logPA_prop = LogProbOfJointAssignment(F,A_prop);
+
+p_acceptance = min(1,exp(logPA_prop- logPA));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Accept or reject proposal

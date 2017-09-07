@@ -15,6 +15,8 @@ function A = MHSWTrans(A, G, F, variant)
 
 %%%%%%%%%%%%%% Get Proposal %%%%%%%%%%%%%%
 % Prune edges from q_list if the nodes don't have the same current value
+%<cuong>q_list is a n*3 matrix. Each row is <nodei, nodej, qij>, where
+% qij is the probability of activiation</cuong>
 q_list = G.q_list;
 q_keep_indx = find(A(q_list(:, 1)) == A(q_list(:, 2)));
 q_list = q_list(q_keep_indx, :);
@@ -47,6 +49,8 @@ if variant == 1
     % Specify the log of the distribution (LogR) from 
     % which a new label for Y is selected for variant 1 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    LogR = log(ones(1,d)/d) % uniform
+    
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 elseif variant == 2
@@ -59,7 +63,7 @@ elseif variant == 2
     % before implementing this, one of the generated
     % data structures may be useful in implementing this section
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    LogR = BlockLogDistribution(selected_vars, G, F, A);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 else
     disp('WARNING: Unrecognized Swendsen-Wang Variant');
@@ -95,7 +99,13 @@ p_acceptance = 0.0;
 % of variables, as well as some ratios used in computing
 % the acceptance probabilitiy.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+LogBS_old = LogProbOfJointAssignment(F, A);
+LogBS_new = LogProbOfJointAssignment(F, A_prop);
 
+diff = LogBS_new - LogBS_old;
+R = LogR(old_value) - LogR(new_value);
+ratio = log_QY_ratio + R;
+p_acceptance = min(1, exp(ratio + diff));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Accept or reject proposal
