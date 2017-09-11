@@ -9,8 +9,9 @@ toy_evidence = zeros(1, length(toy_network.names));
 %toy_cluster_graph = CreateClusterGraph(toy_factors,[]);
 
 % Exact Inference
-ExactM = ComputeExactMarginalsBP(toy_factors, toy_evidence, 0)
-figure, VisualizeToyImageMarginals(toy_network, ExactM);
+ExactM = ComputeExactMarginalsBP(toy_factors, toy_evidence, 0);
+figure;
+VisualizeToyImageMarginals(toy_network, ExactM, 1, 'exact');
 
 % Comment this in to run Approximate Inference on the toy network
 % Approximate Inference
